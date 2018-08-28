@@ -1,0 +1,24 @@
+FROM kalilinux/kali-linux-docker
+
+RUN apt-get update; apt-get -y --with-new-pkgs upgrade; apt -y autoremove
+RUN apt-get -y install metasploit-framework armitage
+
+#white list.. ALL THE IPs
+RUN echo "host  all  all 0.0.0.0/0 md5" >> /etc/postgresql/10/main/pg_hba.conf 
+
+#so postgres can accept remote connections
+RUN echo "listen_addresses = '*'" >> /etc/postgresql/10/main/postgresql.conf
+
+
+RUN echo "#!/bin/sh" > entry.sh
+RUN echo "service postgresql start" >> entry.sh
+RUN echo "msfdb init" >> entry.sh
+RUN echo "msfrpcd -S -P msf" >> entry.sh 
+RUN echo "while true; do echo ping; sleep 60; done" >> entry.sh
+RUN chmod +x entry.sh
+
+ENTRYPOINT ["./entry.sh"]
+
+EXPOSE 55553
+EXPOSE 5432
+
